@@ -1,0 +1,3 @@
+ADMIN_EMAIL=admin@fatec.br
+ADMIN_PASSWORD=senhaSegura123
+JWT_SECRET=super_chave_secreta_app_scholar

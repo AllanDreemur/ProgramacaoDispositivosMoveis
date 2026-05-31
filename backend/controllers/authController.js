@@ -1,15 +1,25 @@
+require('dotenv').config(); // Carrega as credenciais secretas do ficheiro .env
 const jwt = require('jsonwebtoken');
 
 exports.login = (req, res) => {
   const { email, senha } = req.body;
   
-  if (email === 'teste@fatec.br' && senha === '123') {
-    const token = jwt.sign({ id: 1, perfil: 'aluno' }, 'chave_secreta', { expiresIn: '1h' });
+  // 1. VERIFICAÇÃO DE ADMIN
+  if (email === process.env.ADMIN_EMAIL && senha === process.env.ADMIN_PASSWORD) {
+    const token = jwt.sign(
+      { id: 'admin', perfil: 'admin' }, 
+      process.env.JWT_SECRET, 
+      { expiresIn: '2h' }
+    );
     
     return res.json({
       token: token,
-      usuario: { nome: "João", perfil: "aluno" }
+      usuario: { nome: "Administrador", perfil: "admin" }
     });
   }
-  return res.status(401).json({ error: 'Credenciais inválidas' });
+  
+  // 2. ESPAÇO PARA A LÓGICA DE ALUNOS E PROFESSORES
+
+  // Se não for admin e não for achado no banco, devolve erro:
+  return res.status(401).json({ error: 'Credenciais inválidas. E-mail ou senha incorretos.' });
 };
