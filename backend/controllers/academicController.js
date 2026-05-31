@@ -16,8 +16,17 @@ exports.cadastrarAluno = async (req, res) => {
 exports.cadastrarProfessor = async (req, res) => {
   const { nome, titulacao, areaAtuacao, tempoDocencia, email } = req.body; 
   try {
+    const verificaEmail = await pool.query('SELECT id FROM professores WHERE email = $1', [email]);
+    
+    // Se encontrou algum registo (rowCount > 0), bloqueia o cadastro e devolve erro 400
+    if (verificaEmail.rowCount > 0) {
+      return res.status(400).json({ error: 'Este e-mail já está cadastrado para outro professor.' });
+    }
+
+    // 2. Se não existir, faz o cadastro normalmente
     const query = `INSERT INTO professores (nome, titulacao, area, tempo_docencia, email) VALUES ($1, $2, $3, $4, $5)`;
-    await pool.query(query, [nome, titulacao, areaAtuacao, parseInt(tempoDocencia), email]);
+    await pool.query(query, [nome, titulacao, areaAtuacao, tempoDocencia, email]);
+    
     res.status(201).json({ message: 'Professor cadastrado com sucesso!' });
   } catch (err) {
     res.status(500).json({ error: err.message });
