@@ -16,32 +16,38 @@ export default function DisciplinaRegistrationScreen() {
   const [mensagemSucesso, setMensagemSucesso] = useState('');
   const [erros, setErros] = useState({});
 
-  // ESTADOS DOS MENUS DROP DOWN
+  // ESTADOS DOS MENUS DROP DOWN (PROFESSORES)
   const [professores, setProfessores] = useState([]);
   const [loadingProfessores, setLoadingProfessores] = useState(true);
   const [showProfessorDropdown, setShowProfessorDropdown] = useState(false);
   
+  // ESTADOS DOS MENUS DROP DOWN (CURSOS DO BANCO DE DADOS)
+  const [cursos, setCursos] = useState([]);
+  const [loadingCursos, setLoadingCursos] = useState(true);
   const [showCursoDropdown, setShowCursoDropdown] = useState(false);
-  const opcoesCurso = [
-    'Análise e Desenvolvimento de Sistemas',
-    'Desenvolvimento de Software Multiplataforma',
-    'Ciência da Computação',
-    'Engenharia de Software'
-  ];
 
+  // BUSCA PROFESSORES E CURSOS DO BANCO SIMULTANEAMENTE AO CARREGAR A TELA
   useEffect(() => {
-    const fetchProfessores = async () => {
+    const carregarDadosIniciais = async () => {
       try {
-        const response = await axios.get('http://localhost:3000/api/professores');
-        setProfessores(response.data);
+        // Faz as duas requisições em paralelo
+        const [resProfessores, resCursos] = await Promise.all([
+          axios.get('http://localhost:3000/api/professores'),
+          axios.get('http://localhost:3000/api/cursos')
+        ]);
+        
+        setProfessores(resProfessores.data);
+        setCursos(resCursos.data);
       } catch (error) {
-        console.log("Erro ao buscar professores:", error);
-        Alert.alert('Erro', 'Não foi possível carregar a lista de professores.');
+        console.log("Erro ao buscar dados iniciais:", error);
+        Alert.alert('Erro', 'Não foi possível carregar as listas de professores ou cursos.');
       } finally {
         setLoadingProfessores(false);
+        setLoadingCursos(false);
       }
     };
-    fetchProfessores();
+    
+    carregarDadosIniciais();
   }, []);
 
   const validarCampos = () => {
@@ -76,7 +82,7 @@ export default function DisciplinaRegistrationScreen() {
         nomeDisciplina, 
         cargaHoraria, 
         professorResponsavel: professorResponsavelId, 
-        curso, 
+        curso, // Envia o nome do curso selecionado
         semestre 
       });
       
@@ -96,7 +102,7 @@ export default function DisciplinaRegistrationScreen() {
         setErros(prev => ({ ...prev, ...error.response.data.errosMultiplos }));
       } else {
         const mensagemErro = error.response?.data?.error || 'Não foi possível salvar a disciplina.';
-        Alert.alert('Erro no Servidor', mensagemErro);
+        Alert.alert('Erro no Servidor', messageErro);
       }
     } finally {
       setLoading(false);
@@ -122,7 +128,7 @@ export default function DisciplinaRegistrationScreen() {
         placeholder="Carga horária (horas)" 
         value={cargaHoraria} 
         onChangeText={(texto) => { 
-          const apenasNumeros = texto.replace(/[^0-9]/g, ''); // Remove qualquer coisa que não seja número
+          const apenasNumeros = texto.replace(/[^0-9]/g, ''); 
           setCargaHoraria(apenasNumeros); 
           setErros({...erros, cargaHoraria: null}); 
         }} 
@@ -138,7 +144,7 @@ export default function DisciplinaRegistrationScreen() {
         onPress={() => {
           if (!loading && !loadingProfessores && professores.length > 0) {
             setShowProfessorDropdown(!showProfessorDropdown);
-            setShowCursoDropdown(false); // Fecha o menu de cursos se estiver aberto
+            setShowCursoDropdown(false); 
           } else if (professores.length === 0 && !loadingProfessores) {
             Alert.alert('Aviso', 'Nenhum professor cadastrado ainda.');
           }
@@ -173,36 +179,42 @@ export default function DisciplinaRegistrationScreen() {
         </View>
       )}
 
-      {/*CAMPO CURSO (Dropdown)*/}
+      {/* CAMPO CURSO (Dropdown) */}
       <TouchableOpacity 
         style={[styles.input, erros.curso && styles.inputError, { justifyContent: 'center' }]} 
         activeOpacity={0.7}
         onPress={() => {
-          if (!loading) {
+          if (!loading && !loadingCursos && cursos.length > 0) {
             setShowCursoDropdown(!showCursoDropdown);
-            setShowProfessorDropdown(false); // Fecha o menu de professores se estiver aberto
+            setShowProfessorDropdown(false); 
+          } else if (cursos.length === 0 && !loadingCursos) {
+            Alert.alert('Aviso', 'Nenhum curso encontrado no banco.');
           }
         }}
       >
-        <Text style={{ color: curso ? '#333' : '#999' }}>
-          {curso || 'Selecione o Curso'}
-        </Text>
+        {loadingCursos ? (
+          <Text style={{ color: '#999' }}>A carregar cursos...</Text>
+        ) : (
+          <Text style={{ color: curso ? '#333' : '#999' }}>
+            {curso || 'Selecione o Curso'}
+          </Text>
+        )}
       </TouchableOpacity>
       {erros.curso && <Text style={styles.errorText}>{erros.curso}</Text>}
 
       {showCursoDropdown && (
         <View style={styles.dropdown}>
-          {opcoesCurso.map((item, index) => (
+          {cursos.map((c) => (
             <TouchableOpacity 
-              key={index} 
+              key={c.id} 
               style={styles.dropdownItem} 
               onPress={() => {
-                setCurso(item);
+                setCurso(c.nome); // Alimenta o estado com o nome do curso selecionado
                 setErros({ ...erros, curso: null });
                 setShowCursoDropdown(false);
               }}
             >
-              <Text style={styles.dropdownItemText}>{item}</Text>
+              <Text style={styles.dropdownItemText}>{c.nome}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -214,7 +226,7 @@ export default function DisciplinaRegistrationScreen() {
         placeholder="Semestre (Ex: 1, 2, 3)" 
         value={semestre} 
         onChangeText={(texto) => { 
-          const apenasNumeros = texto.replace(/[^0-9]/g, ''); // Remove qualquer coisa que não seja número
+          const apenasNumeros = texto.replace(/[^0-9]/g, ''); 
           setSemestre(apenasNumeros); 
           setErros({...erros, semestre: null}); 
         }} 
@@ -244,8 +256,6 @@ const styles = StyleSheet.create({
   input: { backgroundColor: '#f9f9f9', padding: 12, borderRadius: 8, marginBottom: 12, borderWidth: 1, borderColor: '#eee' },
   inputError: { borderColor: '#dc3545', backgroundColor: '#fff8f8' },
   errorText: { color: '#dc3545', fontSize: 13, marginTop: -8, marginBottom: 10, marginLeft: 4, fontWeight: '500' },
-  
-  // Estilos do Dropdown
   dropdown: {
     backgroundColor: '#fff',
     borderWidth: 1,
@@ -266,7 +276,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#333',
   },
-
   button: { backgroundColor: '#28a745', padding: 15, borderRadius: 8, alignItems: 'center', marginTop: 10 },
   buttonDisabled: { backgroundColor: '#94d3a2' },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },

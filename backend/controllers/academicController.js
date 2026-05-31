@@ -144,3 +144,13 @@ exports.gerarProximaMatricula = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+// Listar Cursos cadastrados no banco de dados
+exports.listarCursos = async (req, res) => {
+  try {
+    const result = await pool.query('SELECT id, nome FROM cursos ORDER BY nome ASC');
+    res.status(200).json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

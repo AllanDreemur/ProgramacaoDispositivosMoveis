@@ -10,8 +10,22 @@ const dbConfig = {
 
 const targetDbName = 'app_scholar';
 
-// Script SQL
 const createTablesQuery = `
+  -- 1. NOVA TABELA DE CURSOS
+  CREATE TABLE IF NOT EXISTS cursos (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(100) UNIQUE
+  );
+
+  -- 2. INSERÇÃO AUTOMÁTICA DOS CURSOS (Ignora se já existirem)
+  INSERT INTO cursos (nome) VALUES 
+    ('Análise e Desenvolvimento de Sistemas'),
+    ('Desenvolvimento de Software Multiplataforma'),
+    ('Ciência da Computação'),
+    ('Engenharia de Software')
+  ON CONFLICT (nome) DO NOTHING;
+
+  -- 3. TABELAS EXISTENTES
   CREATE TABLE IF NOT EXISTS alunos (
     id SERIAL PRIMARY KEY,
     nome VARCHAR(255),
@@ -89,9 +103,9 @@ async function createTables() {
   });
 
   try {
-    console.log('⏳ Conectando ao banco de dados para criar as tabelas...');
+    console.log('⏳ Conectando ao banco de dados para criar as tabelas e inserir cursos base...');
     await pool.query(createTablesQuery);
-    console.log('✅ Tabelas criadas/verificadas com sucesso!');
+    console.log('✅ Tabelas criadas e cursos verificados com sucesso!');
   } catch (err) {
     console.error('❌ Erro ao criar as tabelas:', err.message);
   } finally {
