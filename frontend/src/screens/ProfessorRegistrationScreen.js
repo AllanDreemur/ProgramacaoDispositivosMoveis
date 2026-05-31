@@ -5,11 +5,10 @@ import axios from 'axios';
 export default function ProfessorRegistrationScreen() {
   const [nome, setNome] = useState('');
   const [titulacao, setTitulacao] = useState('');
-  const [areaAtuacao, setAreaAtuacao] = useState('');
+  const [curso, setCurso] = useState(''); // Alterado de areaAtuacao para curso
   const [tempoDocencia, setTempoDocencia] = useState('');
   const [email, setEmail] = useState('');
   
-  //Senha Gerada
   const [senhaGerada, setSenhaGerada] = useState('');
   
   const [loading, setLoading] = useState(false); 
@@ -17,12 +16,14 @@ export default function ProfessorRegistrationScreen() {
   const [erros, setErros] = useState({});
 
   const [showTitulacao, setShowTitulacao] = useState(false);
-  const [showArea, setShowArea] = useState(false);
+  const [showCursoDropdown, setShowCursoDropdown] = useState(false);
 
   const opcoesTitulacao = ['Especialista', 'Mestre', 'Doutor', 'Pós-Doutor'];
-  const opcoesArea = ['Desenvolvimento de Software', 'Infraestrutura e Redes', 'Metodologias Ágeis', 'Design'];
+  
+  // ESTADOS PARA OS CURSOS VINDOS DO BANCO
+  const [cursos, setCursos] = useState([]);
+  const [loadingCursos, setLoadingCursos] = useState(true);
 
-  // Função para gerar uma senha aleatória de 6 caracteres (letras e números)
   const gerarSenhaAleatoria = () => {
     const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let senha = '';
@@ -32,9 +33,22 @@ export default function ProfessorRegistrationScreen() {
     return senha;
   };
 
-  // Quando o ecrã abre pela primeira vez, gera a primeira senha
+  // Carrega os cursos e a senha ao iniciar a tela
   useEffect(() => {
     setSenhaGerada(gerarSenhaAleatoria());
+
+    const fetchCursos = async () => {
+      try {
+        const response = await axios.get('http://localhost:3000/api/cursos');
+        setCursos(response.data);
+      } catch (error) {
+        console.log("Erro ao buscar cursos:", error);
+        Alert.alert('Erro', 'Não foi possível carregar a lista de cursos.');
+      } finally {
+        setLoadingCursos(false);
+      }
+    };
+    fetchCursos();
   }, []);
 
   const validarCampos = () => {
@@ -44,7 +58,8 @@ export default function ProfessorRegistrationScreen() {
     else if (nome.trim().length < 3) novosErros.nome = 'O nome deve ter pelo menos 3 caracteres.';
 
     if (!titulacao.trim()) novosErros.titulacao = 'A titulação é obrigatória.';
-    if (!areaAtuacao.trim()) novosErros.areaAtuacao = 'A área de atuação é obrigatória.';
+    
+    if (!curso) novosErros.curso = 'O curso é obrigatório.';
 
     if (!tempoDocencia.trim()) novosErros.tempoDocencia = 'O tempo de docência é obrigatório.';
     else if (isNaN(tempoDocencia) || Number(tempoDocencia) < 0) novosErros.tempoDocencia = 'Digite apenas números válidos (ex: 5).';
@@ -60,7 +75,7 @@ export default function ProfessorRegistrationScreen() {
   const handleCadastro = async () => {
     setMensagemSucesso('');
     setShowTitulacao(false);
-    setShowArea(false);
+    setShowCursoDropdown(false);
     
     if (!validarCampos()) {
       return; 
@@ -69,19 +84,22 @@ export default function ProfessorRegistrationScreen() {
     setLoading(true);
 
     try {
-      // Manda a senha gerada no corpo da requisição
       await axios.post('http://localhost:3000/api/professores', { 
-        nome, titulacao, areaAtuacao, tempoDocencia, email, senha: senhaGerada 
+        nome, 
+        titulacao, 
+        areaAtuacao: curso, 
+        tempoDocencia, 
+        email, 
+        senha: senhaGerada 
       });
       
       setNome('');
       setTitulacao('');
-      setAreaAtuacao('');
+      setCurso('');
       setTempoDocencia('');
       setEmail('');
       setErros({}); 
 
-      // Gera uma NOVA senha para o próximo professor ser diferente!
       setSenhaGerada(gerarSenhaAleatoria());
 
       setMensagemSucesso('Professor cadastrado com sucesso!');
@@ -123,7 +141,7 @@ export default function ProfessorRegistrationScreen() {
         onPress={() => {
           if (!loading) {
             setShowTitulacao(!showTitulacao);
-            setShowArea(false);
+            setShowCursoDropdown(false);
           }
         }}
       >
@@ -151,35 +169,42 @@ export default function ProfessorRegistrationScreen() {
         </View>
       )}
 
+      {/* CAMPO CURSO VINCULADO AO BANCO DE DADOS */}
       <TouchableOpacity 
-        style={[styles.input, erros.areaAtuacao && styles.inputError, { justifyContent: 'center' }]} 
+        style={[styles.input, erros.curso && styles.inputError, { justifyContent: 'center' }]} 
         activeOpacity={0.7}
         onPress={() => {
-          if (!loading) {
-            setShowArea(!showArea);
+          if (!loading && !loadingCursos && cursos.length > 0) {
+            setShowCursoDropdown(!showCursoDropdown);
             setShowTitulacao(false);
+          } else if (cursos.length === 0 && !loadingCursos) {
+            Alert.alert('Aviso', 'Nenhum curso encontrado no banco.');
           }
         }}
       >
-        <Text style={{ color: areaAtuacao ? '#333' : '#999' }}>
-          {areaAtuacao || 'Selecione a Área de Atuação'}
-        </Text>
+        {loadingCursos ? (
+          <Text style={{ color: '#999' }}>A carregar cursos...</Text>
+        ) : (
+          <Text style={{ color: curso ? '#333' : '#999' }}>
+            {curso || 'Selecione o Curso'}
+          </Text>
+        )}
       </TouchableOpacity>
-      {erros.areaAtuacao && <Text style={styles.errorText}>{erros.areaAtuacao}</Text>}
+      {erros.curso && <Text style={styles.errorText}>{erros.curso}</Text>}
 
-      {showArea && (
+      {showCursoDropdown && (
         <View style={styles.dropdown}>
-          {opcoesArea.map((item, index) => (
+          {cursos.map((c) => (
             <TouchableOpacity 
-              key={index} 
+              key={c.id} 
               style={styles.dropdownItem} 
               onPress={() => {
-                setAreaAtuacao(item);
-                setErros({ ...erros, areaAtuacao: null });
-                setShowArea(false);
+                setCurso(c.nome);
+                setErros({ ...erros, curso: null });
+                setShowCursoDropdown(false);
               }}
             >
-              <Text style={styles.dropdownItemText}>{item}</Text>
+              <Text style={styles.dropdownItemText}>{c.nome}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -210,11 +235,10 @@ export default function ProfessorRegistrationScreen() {
       />
       {erros.email && <Text style={styles.errorText}>{erros.email}</Text>}
 
-      {/* Senha Automática */}
       <TextInput 
         style={[styles.input, styles.inputBloqueado]} 
         value={`${senhaGerada}`} 
-        editable={false} //
+        editable={false} 
       />
       <Text style={styles.avisoText}>* Informe esta senha ao professor para o primeiro acesso.</Text>
 
@@ -238,7 +262,6 @@ const styles = StyleSheet.create({
   header: { fontSize: 22, fontWeight: 'bold', marginBottom: 20, color: '#333' },
   input: { backgroundColor: '#f9f9f9', padding: 12, borderRadius: 8, marginBottom: 12, borderWidth: 1, borderColor: '#eee', color: '#333' },
   
-  // Estilo do campo bloqueado
   inputBloqueado: {
     backgroundColor: '#e9ecef',
     color: '#1a1a1a',
