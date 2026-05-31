@@ -103,3 +103,14 @@ exports.consultarBoletim = async (req, res) => {
     ]
   });
 };
+
+// Listar Professores
+exports.listarProfessores = async (req, res) => {
+  try {
+    // Busca apenas o ID e o Nome de todos os professores cadastrados
+    const result = await pool.query('SELECT id, nome FROM professores ORDER BY nome ASC');
+    res.status(200).json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

@@ -13,6 +13,14 @@ export default function ProfessorRegistrationScreen() {
   const [mensagemSucesso, setMensagemSucesso] = useState(''); 
   const [erros, setErros] = useState({});
 
+  // 1. NOVOS ESTADOS: Controlam se os menus estão abertos ou fechados
+  const [showTitulacao, setShowTitulacao] = useState(false);
+  const [showArea, setShowArea] = useState(false);
+
+  // 2. OPÇÕES DISPONÍVEIS
+  const opcoesTitulacao = ['Especialista', 'Mestre', 'Doutor', 'Pós-Doutor'];
+  const opcoesArea = ['Desenvolvimento de Software', 'Infraestrutura e Redes', 'Metodologias Ágeis', 'Design'];
+
   const validarCampos = () => {
     let novosErros = {}; 
 
@@ -35,6 +43,8 @@ export default function ProfessorRegistrationScreen() {
 
   const handleCadastro = async () => {
     setMensagemSucesso('');
+    setShowTitulacao(false);
+    setShowArea(false);
     
     if (!validarCampos()) {
       return; 
@@ -78,19 +88,95 @@ export default function ProfessorRegistrationScreen() {
     <ScrollView style={styles.container}>
       <Text style={styles.header}>Dados do Professor</Text>
       
-      <TextInput style={[styles.input, erros.nome && styles.inputError]} placeholder="Nome Completo" value={nome} onChangeText={(texto) => { setNome(texto); setErros({...erros, nome: null}); }} editable={!loading} />
+      <TextInput 
+        style={[styles.input, erros.nome && styles.inputError]} 
+        placeholder="Nome Completo" 
+        value={nome} 
+        onChangeText={(texto) => { setNome(texto); setErros({...erros, nome: null}); }} 
+        editable={!loading} 
+      />
       {erros.nome && <Text style={styles.errorText}>{erros.nome}</Text>}
 
-      <TextInput style={[styles.input, erros.titulacao && styles.inputError]} placeholder="Titulação (Ex: Mestre, Doutor)" value={titulacao} onChangeText={(texto) => { setTitulacao(texto); setErros({...erros, titulacao: null}); }} editable={!loading} />
+      {/* 3. CAMPO TITULAÇÃO */}
+      <TouchableOpacity 
+        style={[styles.input, erros.titulacao && styles.inputError, { justifyContent: 'center' }]} 
+        activeOpacity={0.7}
+        onPress={() => {
+          if (!loading) {
+            setShowTitulacao(!showTitulacao);
+            setShowArea(false);
+          }
+        }}
+      >
+        <Text style={{ color: titulacao ? '#333' : '#999' }}>
+          {titulacao || 'Selecione a Titulação'}
+        </Text>
+      </TouchableOpacity>
       {erros.titulacao && <Text style={styles.errorText}>{erros.titulacao}</Text>}
+      
+      {showTitulacao && (
+        <View style={styles.dropdown}>
+          {opcoesTitulacao.map((item, index) => (
+            <TouchableOpacity 
+              key={index} 
+              style={styles.dropdownItem} 
+              onPress={() => {
+                setTitulacao(item);
+                setErros({ ...erros, titulacao: null });
+                setShowTitulacao(false);
+              }}
+            >
+              <Text style={styles.dropdownItemText}>{item}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
 
-      <TextInput style={[styles.input, erros.areaAtuacao && styles.inputError]} placeholder="Área de Atuação" value={areaAtuacao} onChangeText={(texto) => { setAreaAtuacao(texto); setErros({...erros, areaAtuacao: null}); }} editable={!loading} />
+      {/* 4. CAMPO ÁREA DE ATUAÇÃO */}
+      <TouchableOpacity 
+        style={[styles.input, erros.areaAtuacao && styles.inputError, { justifyContent: 'center' }]} 
+        activeOpacity={0.7}
+        onPress={() => {
+          if (!loading) {
+            setShowArea(!showArea);
+            setShowTitulacao(false);
+          }
+        }}
+      >
+        <Text style={{ color: areaAtuacao ? '#333' : '#999' }}>
+          {areaAtuacao || 'Selecione a Área de Atuação'}
+        </Text>
+      </TouchableOpacity>
       {erros.areaAtuacao && <Text style={styles.errorText}>{erros.areaAtuacao}</Text>}
 
-      <TextInput style={[styles.input, erros.tempoDocencia && styles.inputError]} placeholder="Tempo de Docência (anos)" value={tempoDocencia} onChangeText={(texto) => { setTempoDocencia(texto); setErros({...erros, tempoDocencia: null}); }} keyboardType="numeric" editable={!loading} />
+      {showArea && (
+        <View style={styles.dropdown}>
+          {opcoesArea.map((item, index) => (
+            <TouchableOpacity 
+              key={index} 
+              style={styles.dropdownItem} 
+              onPress={() => {
+                setAreaAtuacao(item);
+                setErros({ ...erros, areaAtuacao: null });
+                setShowArea(false);
+              }}
+            >
+              <Text style={styles.dropdownItemText}>{item}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
+      <TextInput 
+        style={[styles.input, erros.tempoDocencia && styles.inputError]} 
+        placeholder="Tempo de Docência (anos)" 
+        value={tempoDocencia} 
+        onChangeText={(texto) => { setTempoDocencia(texto); setErros({...erros, tempoDocencia: null}); }} 
+        keyboardType="numeric" 
+        editable={!loading} 
+      />
       {erros.tempoDocencia && <Text style={styles.errorText}>{erros.tempoDocencia}</Text>}
 
-      {/* Campo E-mail - Recebe o erro direto do Banco de Dados */}
       <TextInput 
         style={[styles.input, erros.email && styles.inputError]} 
         placeholder="Email" 
@@ -123,6 +209,28 @@ const styles = StyleSheet.create({
   input: { backgroundColor: '#f9f9f9', padding: 12, borderRadius: 8, marginBottom: 12, borderWidth: 1, borderColor: '#eee' },
   inputError: { borderColor: '#dc3545', backgroundColor: '#fff8f8' },
   errorText: { color: '#dc3545', fontSize: 13, marginTop: -8, marginBottom: 10, marginLeft: 4, fontWeight: '500' },
+  
+  // 5. ESTILOS DO MENU DE SELEÇÃO
+  dropdown: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    marginTop: -8, 
+    marginBottom: 12,
+    overflow: 'hidden',
+    elevation: 2, // Sombra suave no Android
+  },
+  dropdownItem: {
+    padding: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  dropdownItemText: {
+    fontSize: 15,
+    color: '#333',
+  },
+
   button: { backgroundColor: '#28a745', padding: 15, borderRadius: 8, alignItems: 'center', marginTop: 10 },
   buttonDisabled: { backgroundColor: '#94d3a2' },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
