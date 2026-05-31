@@ -4,8 +4,35 @@ const pool = require('../database/db');
 exports.cadastrarAluno = async (req, res) => {
   const { nome, matricula, curso, email, telefone, cep, endereco, cidade, estado } = req.body;
   try {
+    let errosValidacao = {};
+
+    // 1. Verifica se a matrícula já existe
+    const verificaMatricula = await pool.query('SELECT id FROM alunos WHERE matricula = $1', [matricula]);
+    if (verificaMatricula.rowCount > 0) {
+      errosValidacao.matricula = 'Esta matrícula já está cadastrada.';
+    }
+
+    // 2. Verifica se o e-mail já existe
+    const verificaEmail = await pool.query('SELECT id FROM alunos WHERE email = $1', [email]);
+    if (verificaEmail.rowCount > 0) {
+      errosValidacao.email = 'Este e-mail já está cadastrado para outro aluno.';
+    }
+
+    // 3. Verifica se o telefone já existe
+    const verificaTelefone = await pool.query('SELECT id FROM alunos WHERE telefone = $1', [telefone]);
+    if (verificaTelefone.rowCount > 0) {
+      errosValidacao.telefone = 'Este telefone já está cadastrado para outro aluno.';
+    }
+
+    // 4. Se encontrou ALGUM erro nas verificações, devolve TODOS de uma vez e pára aqui
+    if (Object.keys(errosValidacao).length > 0) {
+      return res.status(400).json({ errosMultiplos: errosValidacao });
+    }
+
+    // Se não encontrou nenhum erro, faz o cadastro!
     const query = `INSERT INTO alunos (nome, matricula, curso, email, telefone, cep, endereco, cidade, estado) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`;
     await pool.query(query, [nome, matricula, curso, email, telefone, cep, endereco, cidade, estado]);
+    
     res.status(201).json({ message: 'Aluno cadastrado com sucesso!' });
   } catch (err) {
     res.status(500).json({ error: err.message });
