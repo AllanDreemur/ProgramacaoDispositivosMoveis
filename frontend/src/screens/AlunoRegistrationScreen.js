@@ -13,22 +13,33 @@ export default function AlunoRegistrationScreen() {
   const [cidade, setCidade] = useState('');
   const [estado, setEstado] = useState('');
 
+  // NOVO ESTADO: Senha Gerada
+  const [senhaGerada, setSenhaGerada] = useState('');
+
   const [loading, setLoading] = useState(false);
   const [mensagemSucesso, setMensagemSucesso] = useState('');
   const [erros, setErros] = useState({});
 
-  // ESTADOS DO DROPDOWN DE CURSOS
   const [cursos, setCursos] = useState([]);
   const [loadingCursos, setLoadingCursos] = useState(true);
   const [showCursoDropdown, setShowCursoDropdown] = useState(false);
 
-  // ESTADOS DO DROPDOWN DE ESTADOS (UF)
   const [showEstadoDropdown, setShowEstadoDropdown] = useState(false);
   const opcoesEstado = [
     'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 
     'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 
     'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
   ];
+
+  // Função para gerar senha aleatória
+  const gerarSenhaAleatoria = () => {
+    const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let senha = '';
+    for (let i = 0; i < 6; i++) {
+      senha += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
+    }
+    return senha;
+  };
 
   const fetchNovaMatricula = async () => {
     try {
@@ -42,6 +53,7 @@ export default function AlunoRegistrationScreen() {
 
   useEffect(() => {
     fetchNovaMatricula();
+    setSenhaGerada(gerarSenhaAleatoria()); // Gera a 1ª senha ao carregar a tela
 
     const fetchCursos = async () => {
       try {
@@ -91,7 +103,7 @@ export default function AlunoRegistrationScreen() {
         if (!response.data.erro) {
           setEndereco(response.data.logradouro);
           setCidade(response.data.localidade);
-          setEstado(response.data.uf); // O ViaCEP preenche automaticamente o Dropdown!
+          setEstado(response.data.uf); 
           setErros(prev => ({ ...prev, cep: null, endereco: null, cidade: null, estado: null }));
         } else {
           setErros(prev => ({ ...prev, cep: 'CEP não encontrado.' }));
@@ -114,8 +126,9 @@ export default function AlunoRegistrationScreen() {
     setLoading(true);
 
     try {
+      // Envia a senha gerada na requisição
       await axios.post('http://localhost:3000/api/alunos', { 
-        nome, matricula, curso, email, telefone, cep, endereco, cidade, estado 
+        nome, matricula, curso, email, telefone, cep, endereco, cidade, estado, senha: senhaGerada 
       });
       
       setNome('');
@@ -131,6 +144,7 @@ export default function AlunoRegistrationScreen() {
       setMensagemSucesso('Aluno cadastrado com sucesso!');
       
       await fetchNovaMatricula(); 
+      setSenhaGerada(gerarSenhaAleatoria()); // Gera uma nova senha para o próximo registo
       
       setTimeout(() => {
         setMensagemSucesso('');
@@ -170,7 +184,6 @@ export default function AlunoRegistrationScreen() {
       />
       {erros.matricula && <Text style={styles.errorText}>{erros.matricula}</Text>}
 
-      {/* CAMPO CURSO (Dropdown) */}
       <TouchableOpacity 
         style={[styles.input, erros.curso && styles.inputError, { justifyContent: 'center' }]} 
         activeOpacity={0.7}
@@ -222,7 +235,15 @@ export default function AlunoRegistrationScreen() {
       />
       {erros.email && <Text style={styles.errorText}>{erros.email}</Text>}
 
-      {/* CAMPO TELEFONE */}
+      {/* NOVO CAMPO: Senha Automática (Bloqueada) abaixo do E-mail */}
+      <TextInput 
+        style={[styles.input, styles.inputBloqueado]} 
+        value={`${senhaGerada}`} 
+        editable={false} 
+      />
+      <Text style={styles.avisoText}>* Informe esta senha ao aluno para o primeiro acesso.</Text>
+
+
       <TextInput 
         style={[styles.input, erros.telefone && styles.inputError]} 
         placeholder="Telefone" 
@@ -237,7 +258,6 @@ export default function AlunoRegistrationScreen() {
       />
       {erros.telefone && <Text style={styles.errorText}>{erros.telefone}</Text>}
 
-      {/* CAMPO CEP */}
       <TextInput 
         style={[styles.input, erros.cep && styles.inputError]} 
         placeholder="CEP (Apenas números)" 
@@ -259,7 +279,6 @@ export default function AlunoRegistrationScreen() {
       <TextInput style={[styles.input, erros.cidade && styles.inputError]} placeholder="Cidade" value={cidade} onChangeText={(texto) => { setCidade(texto); setErros({...erros, cidade: null}); }} editable={!loading} />
       {erros.cidade && <Text style={styles.errorText}>{erros.cidade}</Text>}
 
-      {/* CAMPO ESTADO (Dropdown) */}
       <TouchableOpacity 
         style={[styles.input, erros.estado && styles.inputError, { justifyContent: 'center' }]} 
         activeOpacity={0.7}
@@ -323,11 +342,20 @@ const styles = StyleSheet.create({
     borderColor: '#eee',
     color: '#333'
   },
+  
   inputBloqueado: {
     backgroundColor: '#e9ecef',
-    color: '#6c757d',
-    fontWeight: 'bold'
+    color: '#1a1a1a',
+    fontWeight: 'bold',
+    marginBottom: 4,
   },
+  avisoText: {
+    fontSize: 12,
+    color: '#6c757d',
+    marginBottom: 15,
+    marginLeft: 4,
+  },
+
   inputError: {
     borderColor: '#dc3545',
     backgroundColor: '#fff8f8'
@@ -341,7 +369,6 @@ const styles = StyleSheet.create({
     fontWeight: '500'
   },
   
-  // Estilos do Dropdown
   dropdown: {
     backgroundColor: '#fff',
     borderWidth: 1,

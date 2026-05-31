@@ -36,7 +36,8 @@ const createTablesQuery = `
     cep VARCHAR(10),
     endereco VARCHAR(255),
     cidade VARCHAR(100),
-    estado VARCHAR(2)
+    estado VARCHAR(2),
+    senha VARCHAR(255)
   );
 
   CREATE TABLE IF NOT EXISTS professores (
@@ -45,7 +46,8 @@ const createTablesQuery = `
     titulacao VARCHAR(100),
     area VARCHAR(100),
     tempo_docencia INT,
-    email VARCHAR(255)
+    email VARCHAR(255),
+    senha VARCHAR(255)
   );
 
   CREATE TABLE IF NOT EXISTS disciplinas (

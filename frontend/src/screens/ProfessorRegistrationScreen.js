@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import axios from 'axios';
 
@@ -9,17 +9,33 @@ export default function ProfessorRegistrationScreen() {
   const [tempoDocencia, setTempoDocencia] = useState('');
   const [email, setEmail] = useState('');
   
+  //Senha Gerada
+  const [senhaGerada, setSenhaGerada] = useState('');
+  
   const [loading, setLoading] = useState(false); 
   const [mensagemSucesso, setMensagemSucesso] = useState(''); 
   const [erros, setErros] = useState({});
 
-  // 1. NOVOS ESTADOS: Controlam se os menus estão abertos ou fechados
   const [showTitulacao, setShowTitulacao] = useState(false);
   const [showArea, setShowArea] = useState(false);
 
-  // 2. OPÇÕES DISPONÍVEIS
   const opcoesTitulacao = ['Especialista', 'Mestre', 'Doutor', 'Pós-Doutor'];
   const opcoesArea = ['Desenvolvimento de Software', 'Infraestrutura e Redes', 'Metodologias Ágeis', 'Design'];
+
+  // Função para gerar uma senha aleatória de 6 caracteres (letras e números)
+  const gerarSenhaAleatoria = () => {
+    const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let senha = '';
+    for (let i = 0; i < 6; i++) {
+      senha += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
+    }
+    return senha;
+  };
+
+  // Quando o ecrã abre pela primeira vez, gera a primeira senha
+  useEffect(() => {
+    setSenhaGerada(gerarSenhaAleatoria());
+  }, []);
 
   const validarCampos = () => {
     let novosErros = {}; 
@@ -53,8 +69,9 @@ export default function ProfessorRegistrationScreen() {
     setLoading(true);
 
     try {
+      // Manda a senha gerada no corpo da requisição
       await axios.post('http://localhost:3000/api/professores', { 
-        nome, titulacao, areaAtuacao, tempoDocencia, email 
+        nome, titulacao, areaAtuacao, tempoDocencia, email, senha: senhaGerada 
       });
       
       setNome('');
@@ -63,6 +80,9 @@ export default function ProfessorRegistrationScreen() {
       setTempoDocencia('');
       setEmail('');
       setErros({}); 
+
+      // Gera uma NOVA senha para o próximo professor ser diferente!
+      setSenhaGerada(gerarSenhaAleatoria());
 
       setMensagemSucesso('Professor cadastrado com sucesso!');
       
@@ -85,7 +105,7 @@ export default function ProfessorRegistrationScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
       <Text style={styles.header}>Dados do Professor</Text>
       
       <TextInput 
@@ -97,7 +117,6 @@ export default function ProfessorRegistrationScreen() {
       />
       {erros.nome && <Text style={styles.errorText}>{erros.nome}</Text>}
 
-      {/* 3. CAMPO TITULAÇÃO */}
       <TouchableOpacity 
         style={[styles.input, erros.titulacao && styles.inputError, { justifyContent: 'center' }]} 
         activeOpacity={0.7}
@@ -132,7 +151,6 @@ export default function ProfessorRegistrationScreen() {
         </View>
       )}
 
-      {/* 4. CAMPO ÁREA DE ATUAÇÃO */}
       <TouchableOpacity 
         style={[styles.input, erros.areaAtuacao && styles.inputError, { justifyContent: 'center' }]} 
         activeOpacity={0.7}
@@ -171,7 +189,11 @@ export default function ProfessorRegistrationScreen() {
         style={[styles.input, erros.tempoDocencia && styles.inputError]} 
         placeholder="Tempo de Docência (anos)" 
         value={tempoDocencia} 
-        onChangeText={(texto) => { setTempoDocencia(texto); setErros({...erros, tempoDocencia: null}); }} 
+        onChangeText={(texto) => { 
+          const apenasNumeros = texto.replace(/[^0-9]/g, ''); 
+          setTempoDocencia(apenasNumeros); 
+          setErros({...erros, tempoDocencia: null}); 
+        }} 
         keyboardType="numeric" 
         editable={!loading} 
       />
@@ -187,6 +209,14 @@ export default function ProfessorRegistrationScreen() {
         editable={!loading} 
       />
       {erros.email && <Text style={styles.errorText}>{erros.email}</Text>}
+
+      {/* Senha Automática */}
+      <TextInput 
+        style={[styles.input, styles.inputBloqueado]} 
+        value={`${senhaGerada}`} 
+        editable={false} //
+      />
+      <Text style={styles.avisoText}>* Informe esta senha ao professor para o primeiro acesso.</Text>
 
       {mensagemSucesso !== '' && (
         <View style={styles.sucessoContainer}>
@@ -206,31 +236,27 @@ export default function ProfessorRegistrationScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: '#fff' },
   header: { fontSize: 22, fontWeight: 'bold', marginBottom: 20, color: '#333' },
-  input: { backgroundColor: '#f9f9f9', padding: 12, borderRadius: 8, marginBottom: 12, borderWidth: 1, borderColor: '#eee' },
-  inputError: { borderColor: '#dc3545', backgroundColor: '#fff8f8' },
-  errorText: { color: '#dc3545', fontSize: 13, marginTop: -8, marginBottom: 10, marginLeft: 4, fontWeight: '500' },
+  input: { backgroundColor: '#f9f9f9', padding: 12, borderRadius: 8, marginBottom: 12, borderWidth: 1, borderColor: '#eee', color: '#333' },
   
-  // 5. ESTILOS DO MENU DE SELEÇÃO
-  dropdown: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    marginTop: -8, 
-    marginBottom: 12,
-    overflow: 'hidden',
-    elevation: 2, // Sombra suave no Android
+  // Estilo do campo bloqueado
+  inputBloqueado: {
+    backgroundColor: '#e9ecef',
+    color: '#1a1a1a',
+    fontWeight: 'bold',
+    marginBottom: 4,
   },
-  dropdownItem: {
-    padding: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  dropdownItemText: {
-    fontSize: 15,
-    color: '#333',
+  avisoText: {
+    fontSize: 12,
+    color: '#6c757d',
+    marginBottom: 15,
+    marginLeft: 4,
   },
 
+  inputError: { borderColor: '#dc3545', backgroundColor: '#fff8f8' },
+  errorText: { color: '#dc3545', fontSize: 13, marginTop: -8, marginBottom: 10, marginLeft: 4, fontWeight: '500' },
+  dropdown: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#ddd', borderRadius: 8, marginTop: -8, marginBottom: 12, overflow: 'hidden', elevation: 2 },
+  dropdownItem: { padding: 14, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+  dropdownItemText: { fontSize: 15, color: '#333' },
   button: { backgroundColor: '#28a745', padding: 15, borderRadius: 8, alignItems: 'center', marginTop: 10 },
   buttonDisabled: { backgroundColor: '#94d3a2' },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
