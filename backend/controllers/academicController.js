@@ -64,8 +64,29 @@ exports.cadastrarProfessor = async (req, res) => {
 exports.cadastrarDisciplina = async (req, res) => {
   const { nomeDisciplina, cargaHoraria, professorResponsavel, curso, semestre } = req.body;
   try {
+    let errosValidacao = {};
+
+    // Verifica se a disciplina já existe DENTRO DO MESMO CURSO
+    const verificaDisciplinaCurso = await pool.query(
+      'SELECT id FROM disciplinas WHERE nome = $1 AND curso = $2', 
+      [nomeDisciplina, curso]
+    );
+    
+    // Se encontrou, aponta o erro para os DOIS campos para destacar no telemóvel
+    if (verificaDisciplinaCurso.rowCount > 0) {
+      errosValidacao.nomeDisciplina = 'Esta disciplina já existe neste curso.';
+      errosValidacao.curso = 'Este curso já possui esta disciplina.';
+    }
+
+    // Devolve os erros se existirem e interrompe
+    if (Object.keys(errosValidacao).length > 0) {
+      return res.status(400).json({ errosMultiplos: errosValidacao });
+    }
+
+    // Se passou, faz o cadastro!
     const query = `INSERT INTO disciplinas (nome, carga_horaria, professor_id, curso, semestre) VALUES ($1, $2, $3, $4, $5)`;
-    await pool.query(query, [nomeDisciplina, parseInt(cargaHoraria), parseInt(professorResponsavel), curso, semestre]);
+    await pool.query(query, [nomeDisciplina, cargaHoraria, professorResponsavel, curso, semestre]);
+    
     res.status(201).json({ message: 'Disciplina cadastrada com sucesso!' });
   } catch (err) {
     res.status(500).json({ error: err.message });

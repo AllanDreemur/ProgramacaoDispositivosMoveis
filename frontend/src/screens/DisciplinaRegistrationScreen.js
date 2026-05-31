@@ -9,38 +9,24 @@ export default function DisciplinaRegistrationScreen() {
   const [curso, setCurso] = useState('');
   const [semestre, setSemestre] = useState('');
 
-  // ESTADOS DE CONTROLO DE UI E ERROS
   const [loading, setLoading] = useState(false);
   const [mensagemSucesso, setMensagemSucesso] = useState('');
   const [erros, setErros] = useState({});
 
-  // FUNÇÃO DE VALIDAÇÃO
   const validarCampos = () => {
     let novosErros = {};
 
-    if (!nomeDisciplina.trim()) {
-      novosErros.nomeDisciplina = 'O nome da disciplina é obrigatório.';
-    } else if (nomeDisciplina.trim().length < 3) {
-      novosErros.nomeDisciplina = 'O nome deve ter pelo menos 3 caracteres.';
-    }
+    if (!nomeDisciplina.trim()) novosErros.nomeDisciplina = 'O nome da disciplina é obrigatório.';
+    else if (nomeDisciplina.trim().length < 3) novosErros.nomeDisciplina = 'O nome deve ter pelo menos 3 caracteres.';
 
-    if (!cargaHoraria.trim()) {
-      novosErros.cargaHoraria = 'A carga horária é obrigatória.';
-    } else if (isNaN(cargaHoraria) || Number(cargaHoraria) <= 0) {
-      novosErros.cargaHoraria = 'Digite apenas números válidos (ex: 80).';
-    }
+    if (!cargaHoraria.trim()) novosErros.cargaHoraria = 'A carga horária é obrigatória.';
+    else if (isNaN(cargaHoraria) || Number(cargaHoraria) <= 0) novosErros.cargaHoraria = 'Digite apenas números válidos (ex: 80).';
 
-    if (!professorResponsavel.trim()) {
-      novosErros.professorResponsavel = 'O professor responsável é obrigatório.';
-    }
-
-    if (!curso.trim()) {
-      novosErros.curso = 'O curso é obrigatório.';
-    }
-
-    if (!semestre.trim()) {
-      novosErros.semestre = 'O semestre é obrigatório.';
-    }
+    if (!professorResponsavel.trim()) novosErros.professorResponsavel = 'O professor responsável é obrigatório.';
+    
+    if (!curso.trim()) novosErros.curso = 'O curso é obrigatório.';
+    
+    if (!semestre.trim()) novosErros.semestre = 'O semestre é obrigatório.';
 
     setErros(novosErros);
     return Object.keys(novosErros).length === 0;
@@ -49,7 +35,6 @@ export default function DisciplinaRegistrationScreen() {
   const handleCadastro = async () => {
     setMensagemSucesso('');
 
-    // Verifica se há erros antes de enviar
     if (!validarCampos()) {
       return; 
     }
@@ -61,7 +46,6 @@ export default function DisciplinaRegistrationScreen() {
         nomeDisciplina, cargaHoraria, professorResponsavel, curso, semestre 
       });
       
-      // Limpa os campos após o sucesso
       setNomeDisciplina('');
       setCargaHoraria('');
       setProfessorResponsavel('');
@@ -76,8 +60,14 @@ export default function DisciplinaRegistrationScreen() {
       }, 3000);
 
     } catch (error) {
-      const mensagemErro = error.response?.data?.error || 'Não foi possível salvar a disciplina.';
-      Alert.alert('Erro no Servidor', mensagemErro);
+      // Recebe os múltiplos erros do backend (incluindo se a disciplina já existir no curso)
+      if (error.response?.data?.errosMultiplos) {
+        const errosDoBackend = error.response.data.errosMultiplos;
+        setErros(prev => ({ ...prev, ...errosDoBackend }));
+      } else {
+        const mensagemErro = error.response?.data?.error || 'Não foi possível salvar a disciplina.';
+        Alert.alert('Erro no Servidor', mensagemErro);
+      }
       console.log(error);
     } finally {
       setLoading(false);
@@ -88,7 +78,6 @@ export default function DisciplinaRegistrationScreen() {
     <ScrollView style={styles.container}>
       <Text style={styles.header}>Dados da Disciplina</Text>
       
-      {/* Campo Nome da Disciplina */}
       <TextInput 
         style={[styles.input, erros.nomeDisciplina && styles.inputError]} 
         placeholder="Nome da disciplina" 
@@ -98,7 +87,6 @@ export default function DisciplinaRegistrationScreen() {
       />
       {erros.nomeDisciplina && <Text style={styles.errorText}>{erros.nomeDisciplina}</Text>}
 
-      {/* Campo Carga Horária */}
       <TextInput 
         style={[styles.input, erros.cargaHoraria && styles.inputError]} 
         placeholder="Carga horária (horas)" 
@@ -109,7 +97,6 @@ export default function DisciplinaRegistrationScreen() {
       />
       {erros.cargaHoraria && <Text style={styles.errorText}>{erros.cargaHoraria}</Text>}
 
-      {/* Campo Professor Responsável */}
       <TextInput 
         style={[styles.input, erros.professorResponsavel && styles.inputError]} 
         placeholder="Professor responsável (ID ou Nome)" 
@@ -119,7 +106,6 @@ export default function DisciplinaRegistrationScreen() {
       />
       {erros.professorResponsavel && <Text style={styles.errorText}>{erros.professorResponsavel}</Text>}
 
-      {/* Campo Curso */}
       <TextInput 
         style={[styles.input, erros.curso && styles.inputError]} 
         placeholder="Curso" 
@@ -129,7 +115,6 @@ export default function DisciplinaRegistrationScreen() {
       />
       {erros.curso && <Text style={styles.errorText}>{erros.curso}</Text>}
 
-      {/* Campo Semestre */}
       <TextInput 
         style={[styles.input, erros.semestre && styles.inputError]} 
         placeholder="Semestre (Ex: 1º Semestre)" 
@@ -139,14 +124,12 @@ export default function DisciplinaRegistrationScreen() {
       />
       {erros.semestre && <Text style={styles.errorText}>{erros.semestre}</Text>}
 
-      {/* MENSAGEM DE SUCESSO VERDE */}
       {mensagemSucesso !== '' && (
         <View style={styles.sucessoContainer}>
           <Text style={styles.sucessoText}>{mensagemSucesso}</Text>
         </View>
       )}
 
-      {/* BOTÃO SALVAR */}
       <TouchableOpacity 
         style={[styles.button, loading && styles.buttonDisabled]} 
         onPress={handleCadastro}
@@ -173,7 +156,6 @@ const styles = StyleSheet.create({
     borderWidth: 1, 
     borderColor: '#eee' 
   },
-  
   inputError: {
     borderColor: '#dc3545',
     backgroundColor: '#fff8f8'
@@ -186,11 +168,9 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     fontWeight: '500'
   },
-
   button: { backgroundColor: '#28a745', padding: 15, borderRadius: 8, alignItems: 'center', marginTop: 10 },
   buttonDisabled: { backgroundColor: '#94d3a2' },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-  
   sucessoContainer: {
     backgroundColor: '#d4edda',
     borderColor: '#c3e6cb',
