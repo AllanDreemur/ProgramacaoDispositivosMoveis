@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import axios from 'axios';
 
 export default function DisciplinaRegistrationScreen() {
   const [nomeDisciplina, setNomeDisciplina] = useState('');
   const [cargaHoraria, setCargaHoraria] = useState('');
   
-  // O estado agora guarda o ID do professor (para mandar para o BD) e o Nome (para mostrar na tela)
   const [professorResponsavelId, setProfessorResponsavelId] = useState('');
   const [professorResponsavelNome, setProfessorResponsavelNome] = useState('');
   
@@ -17,12 +16,19 @@ export default function DisciplinaRegistrationScreen() {
   const [mensagemSucesso, setMensagemSucesso] = useState('');
   const [erros, setErros] = useState({});
 
-  // NOVOS ESTADOS PARA A LISTA DE PROFESSORES
+  // ESTADOS DOS MENUS DROP DOWN
   const [professores, setProfessores] = useState([]);
   const [loadingProfessores, setLoadingProfessores] = useState(true);
   const [showProfessorDropdown, setShowProfessorDropdown] = useState(false);
+  
+  const [showCursoDropdown, setShowCursoDropdown] = useState(false);
+  const opcoesCurso = [
+    'Análise e Desenvolvimento de Sistemas',
+    'Desenvolvimento de Software Multiplataforma',
+    'Ciência da Computação',
+    'Engenharia de Software'
+  ];
 
-  // BUSCAR OS PROFESSORES ASSIM QUE A TELA CARREGAR
   useEffect(() => {
     const fetchProfessores = async () => {
       try {
@@ -30,7 +36,7 @@ export default function DisciplinaRegistrationScreen() {
         setProfessores(response.data);
       } catch (error) {
         console.log("Erro ao buscar professores:", error);
-        Alert.alert('Erro', 'Não foi possível carregar a lista de professores do banco de dados.');
+        Alert.alert('Erro', 'Não foi possível carregar a lista de professores.');
       } finally {
         setLoadingProfessores(false);
       }
@@ -45,11 +51,12 @@ export default function DisciplinaRegistrationScreen() {
     else if (nomeDisciplina.trim().length < 3) novosErros.nomeDisciplina = 'O nome deve ter pelo menos 3 caracteres.';
 
     if (!cargaHoraria.trim()) novosErros.cargaHoraria = 'A carga horária é obrigatória.';
-    else if (isNaN(cargaHoraria) || Number(cargaHoraria) <= 0) novosErros.cargaHoraria = 'Digite apenas números válidos (ex: 80).';
+    else if (Number(cargaHoraria) <= 0) novosErros.cargaHoraria = 'Digite uma carga horária válida.';
 
     if (!professorResponsavelId) novosErros.professorResponsavel = 'Selecione um professor responsável.';
-    if (!curso.trim()) novosErros.curso = 'O curso é obrigatório.';
+    if (!curso) novosErros.curso = 'O curso é obrigatório.';
     if (!semestre.trim()) novosErros.semestre = 'O semestre é obrigatório.';
+    else if (Number(semestre) <= 0) novosErros.semestre = 'Digite um semestre válido.';
 
     setErros(novosErros);
     return Object.keys(novosErros).length === 0;
@@ -58,13 +65,13 @@ export default function DisciplinaRegistrationScreen() {
   const handleCadastro = async () => {
     setMensagemSucesso('');
     setShowProfessorDropdown(false);
+    setShowCursoDropdown(false);
 
     if (!validarCampos()) return; 
 
     setLoading(true);
 
     try {
-      // Envia o professorResponsavelId para o banco
       await axios.post('http://localhost:3000/api/disciplinas', { 
         nomeDisciplina, 
         cargaHoraria, 
@@ -97,24 +104,43 @@ export default function DisciplinaRegistrationScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
       <Text style={styles.header}>Dados da Disciplina</Text>
       
-      <TextInput style={[styles.input, erros.nomeDisciplina && styles.inputError]} placeholder="Nome da disciplina" value={nomeDisciplina} onChangeText={(texto) => { setNomeDisciplina(texto); setErros({...erros, nomeDisciplina: null}); }} editable={!loading} />
+      <TextInput 
+        style={[styles.input, erros.nomeDisciplina && styles.inputError]} 
+        placeholder="Nome da disciplina" 
+        value={nomeDisciplina} 
+        onChangeText={(texto) => { setNomeDisciplina(texto); setErros({...erros, nomeDisciplina: null}); }} 
+        editable={!loading} 
+      />
       {erros.nomeDisciplina && <Text style={styles.errorText}>{erros.nomeDisciplina}</Text>}
 
-      <TextInput style={[styles.input, erros.cargaHoraria && styles.inputError]} placeholder="Carga horária (horas)" value={cargaHoraria} onChangeText={(texto) => { setCargaHoraria(texto); setErros({...erros, cargaHoraria: null}); }} keyboardType="numeric" editable={!loading} />
+      {/* CAMPO CARGA HORÁRIA */}
+      <TextInput 
+        style={[styles.input, erros.cargaHoraria && styles.inputError]} 
+        placeholder="Carga horária (horas)" 
+        value={cargaHoraria} 
+        onChangeText={(texto) => { 
+          const apenasNumeros = texto.replace(/[^0-9]/g, ''); // Remove qualquer coisa que não seja número
+          setCargaHoraria(apenasNumeros); 
+          setErros({...erros, cargaHoraria: null}); 
+        }} 
+        keyboardType="numeric" 
+        editable={!loading} 
+      />
       {erros.cargaHoraria && <Text style={styles.errorText}>{erros.cargaHoraria}</Text>}
 
-      {/*CAMPO PROFESSOR RESPONSÁVEL*/}
+      {/* CAMPO PROFESSOR RESPONSÁVEL (Dropdown) */}
       <TouchableOpacity 
         style={[styles.input, erros.professorResponsavel && styles.inputError, { justifyContent: 'center' }]} 
         activeOpacity={0.7}
         onPress={() => {
           if (!loading && !loadingProfessores && professores.length > 0) {
             setShowProfessorDropdown(!showProfessorDropdown);
+            setShowCursoDropdown(false); // Fecha o menu de cursos se estiver aberto
           } else if (professores.length === 0 && !loadingProfessores) {
-            Alert.alert('Aviso', 'Nenhum professor cadastrado ainda. Por favor, cadastre um professor primeiro.');
+            Alert.alert('Aviso', 'Nenhum professor cadastrado ainda.');
           }
         }}
       >
@@ -128,7 +154,6 @@ export default function DisciplinaRegistrationScreen() {
       </TouchableOpacity>
       {erros.professorResponsavel && <Text style={styles.errorText}>{erros.professorResponsavel}</Text>}
 
-      {/* LISTA DE PROFESSORES QUE APARECE AO CLICAR */}
       {showProfessorDropdown && (
         <View style={styles.dropdown}>
           {professores.map((prof) => (
@@ -136,8 +161,8 @@ export default function DisciplinaRegistrationScreen() {
               key={prof.id} 
               style={styles.dropdownItem} 
               onPress={() => {
-                setProfessorResponsavelId(prof.id); // Guarda o ID invisível para o BD
-                setProfessorResponsavelNome(prof.nome); // Mostra o Nome na tela
+                setProfessorResponsavelId(prof.id);
+                setProfessorResponsavelNome(prof.nome);
                 setErros({ ...erros, professorResponsavel: null });
                 setShowProfessorDropdown(false);
               }}
@@ -148,10 +173,54 @@ export default function DisciplinaRegistrationScreen() {
         </View>
       )}
 
-      <TextInput style={[styles.input, erros.curso && styles.inputError]} placeholder="Curso" value={curso} onChangeText={(texto) => { setCurso(texto); setErros({...erros, curso: null}); }} editable={!loading} />
+      {/*CAMPO CURSO (Dropdown)*/}
+      <TouchableOpacity 
+        style={[styles.input, erros.curso && styles.inputError, { justifyContent: 'center' }]} 
+        activeOpacity={0.7}
+        onPress={() => {
+          if (!loading) {
+            setShowCursoDropdown(!showCursoDropdown);
+            setShowProfessorDropdown(false); // Fecha o menu de professores se estiver aberto
+          }
+        }}
+      >
+        <Text style={{ color: curso ? '#333' : '#999' }}>
+          {curso || 'Selecione o Curso'}
+        </Text>
+      </TouchableOpacity>
       {erros.curso && <Text style={styles.errorText}>{erros.curso}</Text>}
 
-      <TextInput style={[styles.input, erros.semestre && styles.inputError]} placeholder="Semestre (Ex: 1º Semestre)" value={semestre} onChangeText={(texto) => { setSemestre(texto); setErros({...erros, semestre: null}); }} editable={!loading} />
+      {showCursoDropdown && (
+        <View style={styles.dropdown}>
+          {opcoesCurso.map((item, index) => (
+            <TouchableOpacity 
+              key={index} 
+              style={styles.dropdownItem} 
+              onPress={() => {
+                setCurso(item);
+                setErros({ ...erros, curso: null });
+                setShowCursoDropdown(false);
+              }}
+            >
+              <Text style={styles.dropdownItemText}>{item}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
+      {/* CAMPO SEMESTRE */}
+      <TextInput 
+        style={[styles.input, erros.semestre && styles.inputError]} 
+        placeholder="Semestre (Ex: 1, 2, 3)" 
+        value={semestre} 
+        onChangeText={(texto) => { 
+          const apenasNumeros = texto.replace(/[^0-9]/g, ''); // Remove qualquer coisa que não seja número
+          setSemestre(apenasNumeros); 
+          setErros({...erros, semestre: null}); 
+        }} 
+        keyboardType="numeric" 
+        editable={!loading} 
+      />
       {erros.semestre && <Text style={styles.errorText}>{erros.semestre}</Text>}
 
       {mensagemSucesso !== '' && (
@@ -176,7 +245,7 @@ const styles = StyleSheet.create({
   inputError: { borderColor: '#dc3545', backgroundColor: '#fff8f8' },
   errorText: { color: '#dc3545', fontSize: 13, marginTop: -8, marginBottom: 10, marginLeft: 4, fontWeight: '500' },
   
-  // Estilos do Dropdown Dinâmico
+  // Estilos do Dropdown
   dropdown: {
     backgroundColor: '#fff',
     borderWidth: 1,
@@ -184,7 +253,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginTop: -8, 
     marginBottom: 12,
-    maxHeight: 200,
+    maxHeight: 200, 
     overflow: 'hidden',
     elevation: 2,
   },
