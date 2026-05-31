@@ -4,6 +4,9 @@ const authController = require('../controllers/authController');
 const academicController = require('../controllers/academicController');
 
 router.post('/login', authController.login);
+
+router.get('/alunos/nova-matricula', academicController.gerarProximaMatricula);
+
 router.post('/alunos', academicController.cadastrarAluno);
 router.post('/professores', academicController.cadastrarProfessor);
 router.get('/professores', academicController.listarProfessores); 

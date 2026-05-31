@@ -114,3 +114,33 @@ exports.listarProfessores = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+
+// Gerar próxima Matrícula de Aluno
+exports.gerarProximaMatricula = async (req, res) => {
+  try {
+    // Procura a matrícula com o maior número (ex: RA005)
+    const result = await pool.query(`
+      SELECT matricula 
+      FROM alunos 
+      WHERE matricula LIKE 'RA%' 
+      ORDER BY id DESC 
+      LIMIT 1
+    `);
+
+    let proximaMatricula = 'RA001'; // Valor padrão se a tabela estiver vazia
+
+    if (result.rows.length > 0) {
+      const ultimaMatricula = result.rows[0].matricula; // ex: "RA005"
+      const numeroAtual = parseInt(ultimaMatricula.replace('RA', ''), 10); // Extrai o "5"
+      const proximoNumero = numeroAtual + 1; // Soma +1 (fica 6)
+      
+      // Formata de volta para ter 3 dígitos (ex: RA006)
+      proximaMatricula = `RA${proximoNumero.toString().padStart(3, '0')}`;
+    }
+
+    res.status(200).json({ matricula: proximaMatricula });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

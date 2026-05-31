@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import axios from 'axios';
 
@@ -16,6 +16,22 @@ export default function AlunoRegistrationScreen() {
   const [loading, setLoading] = useState(false);
   const [mensagemSucesso, setMensagemSucesso] = useState('');
   const [erros, setErros] = useState({});
+
+  // Busca a próxima matrícula disponível ao carregar o ecrã
+  const fetchNovaMatricula = async () => {
+    try {
+      const response = await axios.get('http://localhost:3000/api/alunos/nova-matricula');
+      setMatricula(response.data.matricula);
+    } catch (error) {
+      console.log("Erro ao gerar matrícula:", error);
+      Alert.alert('Erro', 'Não foi possível gerar a matrícula automaticamente.');
+    }
+  };
+
+  // Executa a função acima assim que o ecrã é aberto
+  useEffect(() => {
+    fetchNovaMatricula();
+  }, []);
 
   const validarCampos = () => {
     let novosErros = {};
@@ -76,8 +92,8 @@ export default function AlunoRegistrationScreen() {
         nome, matricula, curso, email, telefone, cep, endereco, cidade, estado 
       });
       
+      // Limpa apenas os campos digitáveis
       setNome('');
-      setMatricula('');
       setCurso('');
       setEmail('');
       setTelefone('');
@@ -89,19 +105,18 @@ export default function AlunoRegistrationScreen() {
 
       setMensagemSucesso('Aluno cadastrado com sucesso!');
       
+      // APÓS O SUCESSO: Busca a nova matrícula para o próximo registo
+      await fetchNovaMatricula(); 
+      
       setTimeout(() => {
         setMensagemSucesso('');
       }, 3000);
 
     } catch (error) {
-      //Verifica se o servidor enviou múltiplos erros simultâneos
       if (error.response?.data?.errosMultiplos) {
         const errosDoBackend = error.response.data.errosMultiplos;
-        
-        // Pega nos erros que o backend mandou (matricula, email, telefone) e coloca no ecrã todos de uma vez
         setErros(prev => ({ ...prev, ...errosDoBackend }));
       } else {
-        // Se for um erro genérico (ex: falha na base de dados), mostra o alerta normal
         const mensagemErro = error.response?.data?.error || 'Falha ao gravar os dados do aluno no servidor.';
         Alert.alert('Erro no Servidor', mensagemErro);
       }
@@ -118,7 +133,13 @@ export default function AlunoRegistrationScreen() {
       <TextInput style={[styles.input, erros.nome && styles.inputError]} placeholder="Nome Completo" value={nome} onChangeText={(texto) => { setNome(texto); setErros({...erros, nome: null}); }} editable={!loading} />
       {erros.nome && <Text style={styles.errorText}>{erros.nome}</Text>}
 
-      <TextInput style={[styles.input, erros.matricula && styles.inputError]} placeholder="Matrícula" value={matricula} onChangeText={(texto) => { setMatricula(texto); setErros({...erros, matricula: null}); }} editable={!loading} />
+      {/* CAMPO DE MATRÍCULA ATUALIZADO (Bloqueado para edição e com cor diferente) */}
+      <TextInput 
+        style={[styles.input, styles.inputBloqueado, erros.matricula && styles.inputError]} 
+        placeholder="Matrícula gerada automaticamente" 
+        value={matricula} 
+        editable={false}
+      />
       {erros.matricula && <Text style={styles.errorText}>{erros.matricula}</Text>}
 
       <TextInput style={[styles.input, erros.curso && styles.inputError]} placeholder="Curso" value={curso} onChangeText={(texto) => { setCurso(texto); setErros({...erros, curso: null}); }} editable={!loading} />
@@ -174,7 +195,14 @@ const styles = StyleSheet.create({
     borderRadius: 8, 
     marginBottom: 12, 
     borderWidth: 1, 
-    borderColor: '#eee' 
+    borderColor: '#eee',
+    color: '#333'
+  },
+
+  inputBloqueado: {
+    backgroundColor: '#e9ecef',
+    color: '#6c757d',
+    fontWeight: 'bold'
   },
   inputError: {
     borderColor: '#dc3545',
