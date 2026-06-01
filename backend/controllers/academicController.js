@@ -157,3 +157,50 @@ exports.listarDisciplinas = async (req, res) => {
     return res.status(500).json({ error: 'Erro interno ao buscar as disciplinas.' });
   }
 };
+
+// Listar Alunos
+exports.listarAlunos = async (req, res) => {
+  try {
+    // Busca id, nome e matrícula para facilitar a identificação
+    const result = await pool.query('SELECT id, nome, matricula FROM alunos ORDER BY nome ASC');
+    res.status(200).json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Cadastrar ou Atualizar Notas
+exports.cadastrarNota = async (req, res) => {
+  const { aluno_id, disciplina_id, nota1, nota2, media, situacao } = req.body;
+  
+  try {
+    // 1. Verifica se já existe uma nota lançada para ESTE aluno NESTA disciplina
+    const verificaNota = await pool.query(
+      'SELECT id FROM notas WHERE aluno_id = $1 AND disciplina_id = $2', 
+      [aluno_id, disciplina_id]
+    );
+
+    if (verificaNota.rowCount > 0) {
+      // 2. Se a nota já existir, fazemos um UPDATE (Isso permite que o professor corrija uma nota lançada errada)
+      const updateQuery = `
+        UPDATE notas 
+        SET nota1 = $1, nota2 = $2, media = $3, situacao = $4 
+        WHERE aluno_id = $5 AND disciplina_id = $6
+      `;
+      await pool.query(updateQuery, [nota1, nota2, media, situacao, aluno_id, disciplina_id]);
+      
+      return res.status(200).json({ message: 'Notas atualizadas com sucesso!' });
+    } else {
+      // 3. Se não existir, fazemos o INSERT padrão
+      const insertQuery = `
+        INSERT INTO notas (aluno_id, disciplina_id, nota1, nota2, media, situacao) 
+        VALUES ($1, $2, $3, $4, $5, $6)
+      `;
+      await pool.query(insertQuery, [aluno_id, disciplina_id, nota1, nota2, media, situacao]);
+      
+      return res.status(201).json({ message: 'Notas cadastradas com sucesso!' });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

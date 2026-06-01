@@ -31,8 +31,12 @@ export default function ProfessorDashboardScreen({ route, navigation }) {
           <Text style={styles.cardText}>Minhas Disciplinas</Text> 
         </TouchableOpacity>
 
-        {/* Esta rota já aponta para a tela de lançamento de notas que criamos */}
-        <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('LancarNotas')}>
+        <TouchableOpacity 
+          style={styles.card} 
+          onPress={() => navigation.navigate('LancarNotas', { 
+            id: route.params?.id 
+          })}
+        >
           <Text style={styles.cardText}>Lançamento de Notas</Text> 
         </TouchableOpacity>
 
