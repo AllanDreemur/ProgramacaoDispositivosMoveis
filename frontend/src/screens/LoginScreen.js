@@ -24,6 +24,15 @@ export default function LoginScreen({ navigation }) {
         // Lógica de Redirecionamento Baseada no Perfil
         if (perfil === 'admin') {
           navigation.replace('Dashboard');
+        } else if (perfil === 'professor') {
+          // Passando o nome do usuário para a tela do professor
+          navigation.replace('ProfessorDashboard', { 
+            id: response.data.usuario.id, 
+            nome: response.data.usuario.nome,
+            area: response.data.usuario.area
+          });
+        } else if (perfil === 'aluno') {
+          navigation.replace('AlunoDashboard', { nome: response.data.usuario.nome });
         } else {
           Alert.alert('Aviso', `Painel de ${perfil} ainda em desenvolvimento.`);
         }

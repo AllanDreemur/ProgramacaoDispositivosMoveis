@@ -143,3 +143,17 @@ exports.listarCursos = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+// Listar Disciplinas
+exports.listarDisciplinas = async (req, res) => {
+  try {
+    // Busca todas as disciplinas no banco
+    const result = await pool.query('SELECT * FROM disciplinas');
+    
+    // Retorna a lista em formato JSON
+    return res.json(result.rows);
+  } catch (error) {
+    console.error('Erro ao listar disciplinas:', error);
+    return res.status(500).json({ error: 'Erro interno ao buscar as disciplinas.' });
+  }
+};

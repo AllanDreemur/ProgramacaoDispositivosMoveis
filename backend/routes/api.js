@@ -12,6 +12,7 @@ router.get('/professores', academicController.listarProfessores);
 router.get('/cursos', academicController.listarCursos);
 
 router.post('/disciplinas', academicController.cadastrarDisciplina);
+router.get('/disciplinas', academicController.listarDisciplinas);
 router.get('/boletim/:matricula', academicController.consultarBoletim);
 
 module.exports = router;
