@@ -15,6 +15,8 @@ import MinhasDisciplinasScreen from '../screens/MinhasDisciplinasScreen';
 import LancarNotasScreen from '../screens/LancarNotasScreen';
 import ConsultarBoletinsScreen from '../screens/ConsultarBoletinsScreen';
 
+import AlunoDashboardScreen from '../screens/AlunoDashboardScreen';
+
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
@@ -35,6 +37,7 @@ export default function AppNavigator() {
         {/* 2. Registrando a Rota de Lançamento de Notas */}
         <Stack.Screen name="LancarNotas" component={LancarNotasScreen} options={{ title: 'Lançar Notas' }} />
         <Stack.Screen name="ConsultarBoletins" component={ConsultarBoletinsScreen} options={{ title: 'Consultar Boletins' }} />
+        <Stack.Screen name="AlunoDashboard" component={AlunoDashboardScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

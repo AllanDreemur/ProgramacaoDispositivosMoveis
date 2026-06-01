@@ -41,7 +41,7 @@ exports.login = async (req, res) => {
       }
     }
 
-    // 3. VERIFICAÇÃO DE ALUNOS NO BANCO DE DADOS
+    // 3. VERIFICAÇÃO DE ALUNOS NO BANCO DE DADOS 
     const alunoQuery = await pool.query('SELECT * FROM alunos WHERE email = $1', [email]);
     
     if (alunoQuery.rows.length > 0) {
@@ -56,7 +56,12 @@ exports.login = async (req, res) => {
         
         return res.json({
           token: token,
-          usuario: { nome: aluno.nome, perfil: 'aluno' }
+          usuario: { 
+            id: aluno.id, // ID necessário para buscar as notas
+            nome: aluno.nome, 
+            perfil: 'aluno',
+            curso: aluno.curso // Curso necessário para listar as disciplinas
+          }
         });
       }
     }

@@ -32,7 +32,11 @@ export default function LoginScreen({ navigation }) {
             area: response.data.usuario.area
           });
         } else if (perfil === 'aluno') {
-          navigation.replace('AlunoDashboard', { nome: response.data.usuario.nome });
+          navigation.replace('AlunoDashboard', { 
+            id: response.data.usuario.id, 
+            nome: response.data.usuario.nome,
+            curso: response.data.usuario.curso
+          });
         } else {
           Alert.alert('Aviso', `Painel de ${perfil} ainda em desenvolvimento.`);
         }
