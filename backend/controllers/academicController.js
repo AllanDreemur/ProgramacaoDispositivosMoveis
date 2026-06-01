@@ -204,3 +204,13 @@ exports.cadastrarNota = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+// Listar Todas as Notas
+exports.listarNotas = async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM notas');
+    res.status(200).json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

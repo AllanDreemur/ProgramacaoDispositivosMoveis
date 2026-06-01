@@ -40,7 +40,12 @@ export default function ProfessorDashboardScreen({ route, navigation }) {
           <Text style={styles.cardText}>Lançamento de Notas</Text> 
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.card} onPress={() => Alert.alert('Aviso', 'Tela de Consulta de Boletim em desenvolvimento.')}>
+        <TouchableOpacity 
+          style={styles.card} 
+          onPress={() => navigation.navigate('ConsultarBoletins', { 
+            id: route.params?.id 
+          })}
+        >
           <Text style={styles.cardText}>Consultar Boletins</Text> 
         </TouchableOpacity>
         

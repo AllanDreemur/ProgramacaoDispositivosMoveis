@@ -8,7 +8,7 @@ router.post('/login', authController.login);
 // --- ROTAS DE ALUNOS ---
 router.get('/alunos/nova-matricula', academicController.gerarProximaMatricula);
 router.post('/alunos', academicController.cadastrarAluno);
-router.get('/alunos', academicController.listarAlunos); // <-- NOVA ROTA ADICIONADA
+router.get('/alunos', academicController.listarAlunos); //
 
 // --- ROTAS DE PROFESSORES ---
 router.post('/professores', academicController.cadastrarProfessor);
@@ -20,7 +20,8 @@ router.post('/disciplinas', academicController.cadastrarDisciplina);
 router.get('/disciplinas', academicController.listarDisciplinas);
 
 // --- ROTAS DE NOTAS E BOLETIM ---
-router.post('/notas', academicController.cadastrarNota); // <-- NOVA ROTA ADICIONADA
+router.post('/notas', academicController.cadastrarNota); //
 router.get('/boletim/:matricula', academicController.consultarBoletim);
+router.get('/notas', academicController.listarNotas);
 
 module.exports = router;
