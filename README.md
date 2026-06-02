@@ -1,50 +1,35 @@
-# Welcome to your Expo app 👋
+## 🚀 Como rodar o projeto localmente
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Após clonar o repositório, você precisará configurar e iniciar tanto o backend quanto o frontend. Siga os passos abaixo:
 
-## Get started
+### 1. Configurando o Backend
 
-1. Install dependencies
+Abra um terminal, navegue até a pasta do backend e siga estes passos:
 
-   ```bash
-   npm install
-   ```
+* **Instale as dependências:**
+    ```bash
+    npm i
+    ```
+* **Crie o banco de dados:** Certifique-se de que o **PgAdmin esteja aberto** e rodando na sua máquina antes de executar o comando abaixo:
+    ```bash
+    npm run init-db
+    ```
+* **Inicie o servidor:**
+    ```bash
+    npm run dev
+    ```
 
-2. Start the app
+### 2. Configurando o Frontend
 
-   ```bash
-   npx expo start
-   ```
+Em um **novo terminal**, navegue até a pasta do frontend da aplicação (Expo):
 
-In the output, you'll find options to open the app in a
+* **Instale as dependências:**
+    ```bash
+    npm i
+    ```
+* **Inicie o aplicativo:**
+    ```bash
+    npx expo start
+    ```
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+> **⚠️ AVISO IMPORTANTE PARA TESTES EM MOBILE:** > Para que o aplicativo funcione corretamente no seu celular (através do Expo Go, por exemplo), o `localhost` não será reconhecido. Você **precisa** alterar as URLs de requisição no código do frontend que estão atualmente como `localhost:3000` para o **endereço IPV4** da sua conexão de rede atual (exemplo: `192.168.0.X:3000`).
