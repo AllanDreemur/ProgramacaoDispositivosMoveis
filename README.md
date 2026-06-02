@@ -1,3 +1,9 @@
+## 🎥 Apresentação do Projeto
+
+Confira o vídeo de apresentação do projeto no YouTube:
+
+[![Assista ao vídeo no YouTube](https://img.shields.io/badge/YouTube-Assistir_Vídeo-red?style=for-the-badge&logo=youtube)](https://www.youtube.com/watch?v=mi0EBoI7vxY)
+
 ## 🚀 Como rodar o projeto localmente
 
 Após clonar o repositório, você precisará configurar e iniciar tanto o backend quanto o frontend. Siga os passos abaixo:
