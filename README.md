@@ -1,5 +1,10 @@
 ## 🎥 Apresentação do Projeto
 
+Conta admin: 
+email: admin@fatec.r
+<br>
+senha:123
+
 Confira o vídeo de apresentação do projeto no YouTube:
 
 [![Assista ao vídeo no YouTube](https://img.shields.io/badge/YouTube-Assistir_Vídeo-red?style=for-the-badge&logo=youtube)](https://www.youtube.com/watch?v=mi0EBoI7vxY)
